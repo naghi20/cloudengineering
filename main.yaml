@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Root stack for ECS Capstone Project
+
+Parameters:
+  GitHubRepo:
+    Type: String
+  GitHubBranch:
+    Type: String
+    Default: main
+  GitHubToken:
+    Type: String
+    NoEcho: true
+
+Resources:
+  # 1. Networking Layer
+  NetworkingStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./networking/vpc.yaml
+      TimeoutInMinutes: 15
+
+  # 2. IAM Layer
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: NetworkingStack
+    Properties:
+      TemplateURL: ./iam/roles.yaml
+      Parameters:
+        ECSClusterName: !GetAtt ECSStack.Outputs.ClusterName
+
+  # 3. ECS Layer
+  ECSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: IAMStack
+    Properties:
+      TemplateURL: ./ecs/cluster.yaml
+      Parameters:
+        VpcId: !GetAtt NetworkingStack.Outputs.VpcId
+        SubnetIds: !GetAtt NetworkingStack.Outputs.PublicSubnets
+
+  # 4. CI/CD Layer
+  CIStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: ECSStack
+    Properties:
+      TemplateURL: ./cicd/pipeline.yaml
+      Parameters:
+        GitHubRepo: !Ref GitHubRepo
+        GitHubToken: !Ref GitHubToken
+        ECRRepoName: !GetAtt ECSStack.Outputs.ECRRepoName
+        ECSClusterName: !GetAtt ECSStack.Outputs.ClusterName
+        ECSServiceName: !GetAtt ECSStack.Outputs.ServiceName
+
+Outputs:
+  ServiceURL:
+    Value: !GetAtt ECSStack.Outputs.LoadBalancerDNS
+  PipelineURL:
+    Value: !GetAtt CIStack.Outputs.PipelineConsoleURL
