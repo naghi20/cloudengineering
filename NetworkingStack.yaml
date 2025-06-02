@@ -1,0 +1,17 @@
+# VPC, Subnets, IGW
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  # ... (subnets, route tables, etc.)
+
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+  PublicSubnets:
+    Value: !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
