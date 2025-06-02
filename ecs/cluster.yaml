@@ -1,0 +1,21 @@
+Parameters:
+  VpcId:
+    Type: String
+  SubnetIds:
+    Type: CommaDelimitedList
+
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: capstone-cluster
+
+  # ... (task definition, service, ALB)
+
+Outputs:
+  ClusterName:
+    Value: !Ref Cluster
+  ServiceName:
+    Value: !GetAtt Service.Name
+  LoadBalancerDNS:
+    Value: !GetAtt LoadBalancer.DNSName
