@@ -1,0 +1,33 @@
+Parameters:
+  GitHubRepo:
+    Type: String
+  GitHubToken:
+    Type: String
+  ECRRepoName:
+    Type: String
+
+Resources:
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Source:
+        Type: GITHUB
+        Location: !Ref GitHubRepo
+      # ... (build spec, environment)
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHub
+              Configuration:
+                Owner: !Select [3, !Split ["/", !Ref GitHubRepo]]
+                Repo: !Select [4, !Split ["/", !Ref GitHubRepo]]
+                OAuthToken: !Ref GitHubToken
+        # ... (build & deploy stages)
+
+Outputs:
+  PipelineConsoleURL:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/codepipeline/pipelines/${Pipeline}/view"
